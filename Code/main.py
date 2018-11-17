@@ -1,5 +1,5 @@
-from Code.data_parser import Parser
-from Code.line import Line
+from Code.data import Data
+from Code.line import Line, parse_line
 from Code.naive_bayes import NaiveBayes
 import csv
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
@@ -14,33 +14,17 @@ TEST_DATA_PATH = "data/test/test.txt"
 TEST_PATH = "data/test.csv"
 
 
-def line_parser(path):
-    """ parse csv into lines,
-     does not fix anything on csv so fix it yourself, be responsible """
-    f = open(path)
-    reader = csv.reader(f, delimiter=',')
-
-    # skip the header
-    next(reader, None)
-
-    # read rows into lines
-    out = [Line(row[0], 1 if row[1] == "fake" else 0) for row in reader]
-    f.close()
-
-    return out
-
-
 if __name__ == "__main__":
     # parse data from file
-    real_data = Parser(REAL_TRAIN_DATA_PATH)
-    fake_data = Parser(FAKE_TRAIN_DATA_PATH)
-    test_data = line_parser(TEST_PATH)
+    real_data = Data(fpath=REAL_TRAIN_DATA_PATH)
+    fake_data = Data(fpath=FAKE_TRAIN_DATA_PATH)
+    test_data = parse_line(TEST_PATH)
 
     # filter out stopwords
-    real_data.filter(ENGLISH_STOP_WORDS, method="inclusive")
-    fake_data.filter(ENGLISH_STOP_WORDS, method="inclusive")
+    real_data.filter(ENGLISH_STOP_WORDS, method="exclusive")
+    fake_data.filter(ENGLISH_STOP_WORDS, method="exclusive")
     for line in test_data:
-        line.filter(ENGLISH_STOP_WORDS, method="inclusive")
+        line.filter(ENGLISH_STOP_WORDS, method="exclusive")
 
     # apply naive bayes
     model = NaiveBayes([fake_data, real_data])

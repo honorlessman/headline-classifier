@@ -1,14 +1,13 @@
-from Code.bag_of_words import BagOfWords
+import csv
+from Code.data import Data
 
 
-class Line:
-    """ Line object for test data """
+class Line(Data):
+    """ Line object for test data, child class of data """
     def __init__(self, line, category):
+        super().__init__()
         self.line = line.lower().strip()
         self.category = category
-
-        self.unigram_words = BagOfWords()
-        self.bigram_words = BagOfWords()
 
         self.fake_score = 0
         self.real_score = 0
@@ -19,19 +18,7 @@ class Line:
         self.bi_is_fake = -1
 
         # start parsing
-        self.parse_line()
-
-    def parse_unigram(self):
-        """ parse unigram words into bag """
-        for word in self.line.split(" "):
-            self.unigram_words.add(word)
-
-    def parse_bigram(self):
-        """ parse bigram words into bag """
-        words = self.line.split(" ")
-        for index in range(len(words) - 1):
-            word = words[index] + " " + words[index + 1]
-            self.bigram_words.add(word)
+        self.parse()
 
     def predict(self):
         """ predict if fake or not based on score given """
@@ -47,11 +34,23 @@ class Line:
         else:
             self.bi_is_fake = 1
 
-    def parse_line(self):
+    def parse(self):
         """ parse line into bags """
-        self.parse_bigram()
-        self.parse_unigram()
+        self.parse_bigram(self.line)
+        self.parse_unigram(self.line)
 
-    def filter(self, iterable, method="exclusive"):
-        """ filter the unigram words """
-        self.unigram_words.filter(iterable, method=method)
+
+def parse_line(file):
+    """ parse csv into lines,
+     does not fix anything on csv so fix it yourself, be responsible """
+    f = open(file)
+    reader = csv.reader(f, delimiter=',')
+
+    # skip the header
+    next(reader, None)
+
+    # read rows into lines
+    out = [Line(row[0], 1 if row[1] == "fake" else 0) for row in reader]
+    f.close()
+
+    return out

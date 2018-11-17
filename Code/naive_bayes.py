@@ -57,7 +57,7 @@ class NaiveBayes:
         # summation of all the probability of words (with log10)
         fake_sums = 0.0
         real_sums = 0.0
-        for word in line.unigram_words.values():
+        for word in line.unigram_bag.values():
             # for w being the word and c being class(real)
             # uni_fake_word_in_class: count(w,c) c = fake
             # uni_fake_total_in_class: count(c) c = fake
@@ -90,7 +90,7 @@ class NaiveBayes:
         # summation of all the probability of words (with log10)
         fake_sums = 0.0
         real_sums = 0.0
-        for word in line.bigram_words.values():
+        for word in line.bigram_bag.values():
             # for w being the word and c being class(real)
             # bi_fake_word_in_class: count(w,c) c = fake
             # bi_fake_total_in_class: count(c) c = fake

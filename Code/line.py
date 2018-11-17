@@ -51,3 +51,7 @@ class Line:
         """ parse line into bags """
         self.parse_bigram()
         self.parse_unigram()
+
+    def filter(self, iterable, method="exclusive"):
+        """ filter the unigram words """
+        self.unigram_words.filter(iterable, method=method)

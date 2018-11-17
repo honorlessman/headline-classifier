@@ -2,8 +2,7 @@ from Code.bag_of_words import BagOfWords
 
 
 class Parser:
-    """ Parses the text into unigram/bigram words objects """
-    # TODO: add stopwatch removal
+    """ Parses the text into unigram/bigram words objects. For training data """
     def __init__(self, fpath):
         self.path = fpath
         self.unigram_bag = BagOfWords()
@@ -25,6 +24,11 @@ class Parser:
         for index in range(len(words) - 1):
             word = "{} {}".format(words[index], words[index + 1])
             self.bigram_bag.add(word)
+
+    def filter(self, iterable, method="exclusive"):
+        """ filter the unigram bag """
+        self.unigram_bag.filter(iterable, method=method)
+        self.sorted_unigram = self.unigram_bag.ordered()
 
     def parse(self):
         """ parse text to lines then into words """

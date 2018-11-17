@@ -31,11 +31,23 @@ def line_parser(path):
 
 
 if __name__ == "__main__":
+    # parse data from file
     real_data = Parser(REAL_TRAIN_DATA_PATH)
     fake_data = Parser(FAKE_TRAIN_DATA_PATH)
     test_data = line_parser(TEST_PATH)
 
+    # filter out stopwords
+    real_data.filter(ENGLISH_STOP_WORDS, method="inclusive")
+    fake_data.filter(ENGLISH_STOP_WORDS, method="inclusive")
+    for line in test_data:
+        line.filter(ENGLISH_STOP_WORDS, method="inclusive")
+
+    # apply naive bayes
     model = NaiveBayes([fake_data, real_data])
     model.fit(test_data)
+
+    # get results
+    print("Unigram accuracy score: {}".format(model.accuracy_score))
+    print("Bigram accuracy score: {}".format(model.bi_accuracy_score))
 
     print("done")

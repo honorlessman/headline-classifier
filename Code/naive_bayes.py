@@ -17,26 +17,20 @@ class NaiveBayes:
         self.unigram_total = len(self.real_parser.unigram_bag.merge(self.fake_parser.unigram_bag, method="keys"))
         self.bigram_total = len(self.real_parser.bigram_bag.merge(self.fake_parser.bigram_bag, method="keys"))
 
-        self.fake_possibility = self.fake_parser.unigram_bag.size() / self.unigram_total
-        self.fake_possibility_bigram = self.fake_parser.bigram_bag.size() / self.bigram_total
-
-        self.real_possibility = self.real_parser.unigram_bag.size() / self.unigram_total
-        self.real_possibility_bigram = self.real_parser.bigram_bag.size() / self.bigram_total
-
-        self.unigram_score = 0
-
     def accuracy(self):
         """ calculate accuracy """
+        # for unigram
         self.results = {False: [line for line in self.test if line.is_fake != line.category],
                         True: [line for line in self.test if line.is_fake == line.category]}
         self.accuracy_score = len(list(self.results[True])) / (len(self.results[False]) + len(self.results[True]))
 
+        # for bigram
         self.bi_results = {False: [line for line in self.test if line.bi_is_fake != line.category],
                            True: [line for line in self.test if line.bi_is_fake == line.category]}
         self.bi_accuracy_score = len(list(self.bi_results[True])) / (len(self.bi_results[False]) + len(self.bi_results[True]))
 
+    """
     def old_calculate_fake(self, line):
-        """ calculate the possibility of line to be fake or real """
         # multiplication of the possibility of words in bag of words
         possibilities_of_bow = 1
 
@@ -56,6 +50,7 @@ class NaiveBayes:
         line.fake_score = possibilities_of_bow_fake / possibilities_of_bow
         line.real_score = possibilities_of_bow_real / possibilities_of_bow
         line.predict()
+    """
 
     def calculate_unigram(self, line):
         """ calculate real and fake score for given line and write scores to the line object itself """

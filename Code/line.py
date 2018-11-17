@@ -4,9 +4,10 @@ from Code.data import Data
 
 class Line(Data):
     """ Line object for test data, child class of data """
-    def __init__(self, line, category):
-        super().__init__()
-        self.line = line.lower().strip()
+    def __init__(self, line, category, line_prepend="", line_append=""):
+        super().__init__(line_prepend=line_prepend, line_append=line_append)
+
+        self.line = "{}{}{}".format(self.line_prepend, line.lower().strip(), self.line_append)
         self.category = category
 
         self.fake_score = 0
@@ -40,7 +41,7 @@ class Line(Data):
         self.parse_unigram(self.line)
 
 
-def parse_line(file):
+def parse_line(file, line_append="", line_prepend=""):
     """ parse csv into lines,
      does not fix anything on csv so fix it yourself, be responsible """
     f = open(file)
@@ -50,7 +51,8 @@ def parse_line(file):
     next(reader, None)
 
     # read rows into lines
-    out = [Line(row[0], 1 if row[1] == "fake" else 0) for row in reader]
+    out = [Line(row[0], 1 if row[1] == "fake" else 0,
+                line_append=line_append, line_prepend=line_prepend) for row in reader]
     f.close()
 
     return out

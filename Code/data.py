@@ -2,10 +2,13 @@ from Code.bag_of_words import BagOfWords
 
 
 class Data:
-    """ Parent for both line and training parser """
-    def __init__(self, fpath=None):
+    """ Holds unigram and bigram training/test data from files """
+    def __init__(self, fpath=None, line_prepend="", line_append=""):
         self.unigram_bag = BagOfWords()
         self.bigram_bag = BagOfWords()
+
+        self.line_prepend = line_prepend
+        self.line_append = line_append
 
         self.file_path = fpath
         if fpath is not None:
@@ -40,7 +43,7 @@ class Data:
         """ add a whole plaintext into bag """
         with open(self.file_path) as f:
             for line in f.readlines():
-                clean_line = line.lower().strip()
+                clean_line = "{}{}{}".format(self.line_prepend, line.lower().strip(), self.line_append)
                 self.parse_unigram(clean_line)
                 self.parse_bigram(clean_line)
         self.update()

@@ -27,7 +27,8 @@ class NaiveBayes:
         # for bigram
         self.bi_results = {False: [line for line in self.test if line.bi_is_fake != line.category],
                            True: [line for line in self.test if line.bi_is_fake == line.category]}
-        self.bi_accuracy_score = len(list(self.bi_results[True])) / (len(self.bi_results[False]) + len(self.bi_results[True]))
+        self.bi_accuracy_score = len(list(self.bi_results[True])) / (len(self.bi_results[False])
+                                                                     + len(self.bi_results[True]))
 
     """
     def old_calculate_fake(self, line):

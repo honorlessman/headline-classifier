@@ -6,6 +6,7 @@ class BagOfWords:
     def __init__(self):
         self.__bag = {}
         self.total = 0
+        self.weights = 0
 
     def __getitem__(self, key):
         return self.__bag.get(key, Word(key, count=0))
@@ -16,8 +17,11 @@ class BagOfWords:
     def __iter__(self):
         return iter(self.__bag)
 
+    def __len__(self):
+        return len(self.__bag)
+
     def add(self, word):
-        """ add a new word to bag or update existing one """
+        """ add a new word to bag or update existing one, if the word is unique also increment the document counter """
         if word not in self.__bag:
             self.__bag[word] = Word(word)
         else:
@@ -33,6 +37,16 @@ class BagOfWords:
             self.__bag.pop(word)
 
         # update the total
+        self.sum()
+
+    def calculate_weights(self, number_of_documents=1):
+        """
+        document_count: number of training lines/documents
+        update weights for every word in the bag
+        """
+        mx = max(self.__bag.values(), key=lambda x: x.count).count
+        for word in self.__bag.values():
+            word.calculate_tf_idf(mx, number_of_documents)
         self.sum()
 
     def size(self):
@@ -63,10 +77,11 @@ class BagOfWords:
 
     def filter(self, iterable, method="exclusive"):
         """ filter bag using a list, return a filtered bag """
+        out = BagOfWords()
         if method == "exclusive":
-            self.from_dict(self.__exclusive_filter(iterable))
+            return out.from_dict(self.__exclusive_filter(iterable))
         elif method == "inclusive":
-            self.from_dict(self.__inclusive_filter(iterable))
+            return out.from_dict(self.__inclusive_filter(iterable))
         else:
             print("Wrong method type")
 
@@ -80,7 +95,15 @@ class BagOfWords:
             return out
         elif method == "keys":
             """ if you only need keys return set of keys instead, usually faster """
-            return set(self.__bag) | set(bag.bag())
+            return list(set(self.__bag) | set(bag.bag()))
+        elif method == "intersect":
+            """ return a list of keys that exists in both bags """
+            return list(set(self.__bag) & set(bag.bag()))
+        elif method == "subtract":
+            return list(set(self.__bag) - set(bag.bag()))
+        else:
+            print("Invalid method")
+            return None
 
     def get(self, key):
         """ get a key from bag """
@@ -90,9 +113,9 @@ class BagOfWords:
         """ get whole dictionary """
         return self.__bag
 
-    def ordered(self):
+    def ordered(self, key=lambda x: x.count):
         """ return ordered list of keys """
-        return sorted(list(self.__bag.values()), key=lambda x: x.count, reverse=True)
+        return sorted(list(self.__bag.values()), key=key, reverse=True)
 
     def values(self):
         """ return only values of dict """
@@ -105,4 +128,5 @@ class BagOfWords:
     def sum(self):
         """ update and return the sum of all elements """
         self.total = sum([word.count for word in self.__bag.values()])
+        self.weights = sum([word.weight for word in self.__bag.values()])
         return self.total

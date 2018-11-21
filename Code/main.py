@@ -6,20 +6,31 @@ from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 REAL_TRAIN_DATA_PATH = "data/clean_real-Train.txt"
 FAKE_TRAIN_DATA_PATH = "data/clean_fake-Train.txt"
 
-TEST_DATA_PATH = "data/test/test.txt"
-TEST_PATH = "data/test.csv"
+TEST_PATH_PATH = "data/test.csv"
 
 LINE_PREPEND = "<l>"
 LINE_APPEND = "</l>"
 
 FILTER_STOPWORDS = False
+EXPERIMENTAL_FILTERING = False
+TF_IDF = False
+UNIGRAM_TOKEN_CLEAR = True
 
 
 if __name__ == "__main__":
+    # TODO: either deal with tf-idf or finish the top scoring
     # parse data from file
     real_data = Data(fpath=REAL_TRAIN_DATA_PATH, line_prepend=LINE_PREPEND, line_append=LINE_APPEND)
     fake_data = Data(fpath=FAKE_TRAIN_DATA_PATH, line_prepend=LINE_PREPEND, line_append=LINE_APPEND)
-    test_data = parse_line(TEST_PATH, line_prepend=LINE_PREPEND, line_append=LINE_APPEND)
+    test_data = parse_line(TEST_PATH_PATH, line_prepend=LINE_PREPEND, line_append=LINE_APPEND)
+
+    # update the document counts for unigram words, used to calculate tf-idf
+    non_unique_unigram = real_data.unigram_bag.merge(fake_data.unigram_bag, method="intersect")
+    non_unique_bigram = real_data.bigram_bag.merge(fake_data.bigram_bag, method="intersect")
+    real_data.add_document(non_unique_bigram, bag="bigram")
+    real_data.add_document(non_unique_unigram)
+    fake_data.add_document(non_unique_bigram, bag="bigram")
+    fake_data.add_document(non_unique_unigram)
 
     # filter out stopwords
     if FILTER_STOPWORDS:
@@ -28,12 +39,29 @@ if __name__ == "__main__":
         for line in test_data:
             line.filter(ENGLISH_STOP_WORDS, method="exclusive")
 
+    if EXPERIMENTAL_FILTERING:
+        # EXPERIMENT, removal of words that exists in both data
+        intersection = real_data.unigram_bag.merge(fake_data.unigram_bag, method="intersect")
+        real_data.filter(intersection, method="exclusive")
+        fake_data.filter(intersection, method="exclusive")
+
+    if UNIGRAM_TOKEN_CLEAR:
+        # clear the added token from unigram bags
+        fake_data.filter([LINE_PREPEND.strip(), LINE_APPEND.strip()])
+        real_data.filter([LINE_PREPEND.strip(), LINE_APPEND.strip()])
+        for line in test_data:
+            line.filter([LINE_PREPEND.strip(), LINE_APPEND.strip()])
+
     # apply naive bayes
     model = NaiveBayes([fake_data, real_data])
-    model.fit(test_data)
+    model.fit(test_data, tf_idf=TF_IDF)
+
+    # analyze the training data (check top 10s)
+    real_data.analysis(fake_data, ENGLISH_STOP_WORDS)
+    fake_data.analysis(real_data, ENGLISH_STOP_WORDS)
 
     # get results
-    print("Unigram accuracy score: {}".format(model.accuracy_score))
-    print("Bigram accuracy score: {}".format(model.bi_accuracy_score))
+    print("Unigram accuracy: {:.2f}%".format(model.accuracy_score))
+    print("Bigram accuracy: {:.2f}%".format(model.bi_accuracy_score))
 
     print("done")

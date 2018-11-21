@@ -7,7 +7,7 @@ class Line(Data):
     def __init__(self, line, category, line_prepend="", line_append=""):
         super().__init__(line_prepend=line_prepend, line_append=line_append)
 
-        self.line = "{}{}{}".format(self.line_prepend, line.lower().strip(), self.line_append)
+        self.line = "{} {} {}".format(self.line_prepend, line.lower().strip(), self.line_append)
         self.category = category
 
         self.fake_score = 0

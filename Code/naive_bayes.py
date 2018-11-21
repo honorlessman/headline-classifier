@@ -23,37 +23,16 @@ class NaiveBayes:
         self.results = {False: [line for line in self.test if line.is_fake != line.category],
                         True: [line for line in self.test if line.is_fake == line.category]}
         self.accuracy_score = len(list(self.results[True])) / (len(self.results[False]) + len(self.results[True]))
+        self.accuracy_score *= 100
 
         # for bigram
         self.bi_results = {False: [line for line in self.test if line.bi_is_fake != line.category],
                            True: [line for line in self.test if line.bi_is_fake == line.category]}
         self.bi_accuracy_score = len(list(self.bi_results[True])) / (len(self.bi_results[False])
                                                                      + len(self.bi_results[True]))
+        self.bi_accuracy_score *= 100
 
-    """
-    def old_calculate_fake(self, line):
-        # multiplication of the possibility of words in bag of words
-        possibilities_of_bow = 1
-
-        # multiplication of the possibility of words from bag of words to be fake/real
-        possibilities_of_bow_fake = 1
-        possibilities_of_bow_real = 1
-
-        for word in line.unigram_words.values():
-            # counts of words from train bag of words
-            fake_count = self.fake_parser.unigram_bag[word.word].count
-            real_count = self.real_parser.unigram_bag[word.word].count
-
-            possibilities_of_bow *= (word.count * (fake_count + real_count) / self.unigram_total)
-            possibilities_of_bow_fake *= (word.count * fake_count * self.fake_possibility / self.unigram_total)
-            possibilities_of_bow_real *= (word.count * real_count * self.real_possibility / self.unigram_total)
-
-        line.fake_score = possibilities_of_bow_fake / possibilities_of_bow
-        line.real_score = possibilities_of_bow_real / possibilities_of_bow
-        line.predict()
-    """
-
-    def calculate_unigram(self, line):
+    def calculate_unigram(self, line, tf_idf=False):
         """ calculate real and fake score for given line and write scores to the line object itself """
         # summation of all the probability of words (with log10)
         fake_sums = 0.0
@@ -62,31 +41,50 @@ class NaiveBayes:
             # for w being the word and c being class(real)
             # uni_fake_word_in_class: count(w,c) c = fake
             # uni_fake_total_in_class: count(c) c = fake
-            uni_fake_word_in_class = self.fake_parser.unigram_bag[word.word].count
-            uni_fake_total_in_class = self.fake_parser.unigram_bag.total
+            if tf_idf:
+                uni_fake_word_in_class = self.fake_parser.unigram_bag[word.word].weight
+                uni_fake_total_in_class = self.fake_parser.unigram_bag.weights
 
-            # for w being the word and c being class(real)
-            # uni_fake_word_in_class: count(w,c) c = real
-            # uni_fake_total_in_class: count(c) c = real
-            uni_real_word_in_class = self.real_parser.unigram_bag[word.word].count
-            uni_real_total_in_class = self.real_parser.unigram_bag.total
+                uni_real_word_in_class = self.real_parser.unigram_bag[word.word].weight
+                uni_real_total_in_class = self.real_parser.unigram_bag.weights
+
+            else:
+                uni_fake_word_in_class = self.fake_parser.unigram_bag[word.word].count
+                uni_fake_total_in_class = self.fake_parser.unigram_bag.total
+
+                # for w being the word and c being class(real)
+                # uni_fake_word_in_class: count(w,c) c = real
+                # uni_fake_total_in_class: count(c) c = real
+                uni_real_word_in_class = self.real_parser.unigram_bag[word.word].count
+                uni_real_total_in_class = self.real_parser.unigram_bag.total
 
             # calculation is as follows:
-            # log_10
+            # count(w) * log_10
             # (
             # ( count(w,c) + 1   )
             #  -------------------
             # (count(c) + |v| + 1)
             # )
-            fake_sums += log10((uni_fake_word_in_class + 1) / (uni_fake_total_in_class + self.unigram_total + 1))
-            real_sums += log10((uni_real_word_in_class + 1) / (uni_real_total_in_class + self.unigram_total + 1))
+            fake_score = word.count * log10((uni_fake_word_in_class + 1) /
+                                            (uni_fake_total_in_class + self.unigram_total + 1))
+
+            # assign score to word and add it to the sum
+            self.fake_parser.unigram_bag[word.word].score = fake_score
+            fake_sums += fake_score
+
+            real_score = word.count * log10((uni_real_word_in_class + 1) /
+                                            (uni_real_total_in_class + self.unigram_total + 1))
+
+            # assign score to word and add it to the sum
+            self.real_parser.unigram_bag[word.word].score = real_score
+            real_sums += real_score
 
         # assign the scores and predict
         line.fake_score = fake_sums
         line.real_score = real_sums
         line.predict()
 
-    def calculate_bigram(self, line):
+    def calculate_bigram(self, line, tf_idf=False):
         """ calculate real and fake score for given line in bigram and write scores to the line object itself """
         # summation of all the probability of words (with log10)
         fake_sums = 0.0
@@ -95,35 +93,51 @@ class NaiveBayes:
             # for w being the word and c being class(real)
             # bi_fake_word_in_class: count(w,c) c = fake
             # bi_fake_total_in_class: count(c) c = fake
-            bi_fake_word_in_class = self.fake_parser.bigram_bag[word.word].count
-            bi_fake_total_in_class = self.fake_parser.bigram_bag.total
+            if tf_idf:
+                bi_fake_word_in_class = self.fake_parser.bigram_bag[word.word].weight
+                bi_fake_total_in_class = self.fake_parser.bigram_bag.weights
 
-            # for w being the word and c being class(real)
-            # bi_fake_word_in_class: count(w,c) c = real
-            # bi_fake_total_in_class: count(c) c = real
-            bi_real_word_in_class = self.real_parser.bigram_bag[word.word].count
-            bi_real_total_in_class = self.real_parser.bigram_bag.total
+                bi_real_word_in_class = self.real_parser.bigram_bag[word.word].weight
+                bi_real_total_in_class = self.real_parser.bigram_bag.weights
+            else:
+                bi_fake_word_in_class = self.fake_parser.bigram_bag[word.word].count
+                bi_fake_total_in_class = self.fake_parser.bigram_bag.total
+
+                # for w being the word and c being class(real)
+                # bi_fake_word_in_class: count(w,c) c = real
+                # bi_fake_total_in_class: count(c) c = real
+                bi_real_word_in_class = self.real_parser.bigram_bag[word.word].count
+                bi_real_total_in_class = self.real_parser.bigram_bag.total
 
             # calculation is as follows:
-            # log_10
+            # count(w) * log_10
             # (
             # ( count(w,c) + 1   )
             #  -------------------
             # (count(c) + |v| + 1)
             # )
-            fake_sums += log10((bi_fake_word_in_class + 1) / (bi_fake_total_in_class + self.bigram_total + 1))
-            real_sums += log10((bi_real_word_in_class + 1) / (bi_real_total_in_class + self.bigram_total + 1))
+            fake_score = word.count * log10((bi_fake_word_in_class + 1) /
+                                            (bi_fake_total_in_class + self.bigram_total + 1))
+            # assign score to word and add it to the sum
+            fake_sums += fake_score
+            self.fake_parser.bigram_bag[word.word].score = fake_score
+
+            real_score = word.count * log10((bi_real_word_in_class + 1) /
+                                            (bi_real_total_in_class + self.bigram_total + 1))
+            # assign score to word and add it to the sum
+            real_sums += real_score
+            self.real_parser.bigram_bag[word.word].score = real_score
 
         # assign the scores and predict
         line.bi_fake_score = fake_sums
         line.bi_real_score = real_sums
         line.predict()
 
-    def fit(self, line):
+    def fit(self, line, tf_idf=False):
         self.test = line
         for line in self.test:
             # calculate bayes prediction for lines
-            self.calculate_unigram(line)
-            self.calculate_bigram(line)
+            self.calculate_unigram(line, tf_idf=tf_idf)
+            self.calculate_bigram(line, tf_idf=tf_idf)
 
         self.accuracy()

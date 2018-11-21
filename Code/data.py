@@ -1,4 +1,4 @@
-from Code.bag_of_words import BagOfWords
+from Code.bag_of_words import BagOfWords, Word
 
 
 class Data:
@@ -86,3 +86,38 @@ class Data:
 
         self.unigram_bag.calculate_weights(number_of_documents=2)
         self.bigram_bag.calculate_weights(number_of_documents=2)
+
+    @staticmethod
+    def _get(iterable, ind):
+        """ safe get for the result list"""
+        try:
+            return iterable[ind]
+        except IndexError:
+            return Word("")
+
+    def pprint(self):
+        """ pretty print for the results """
+        
+        print("%-5s%-20s%-20s%-20s%-20s%-20s%-20s" % (
+            "#",
+            "UNIGRAM WORD",
+            "UNIGRAM SCORE",
+            "BIGRAM WORD",
+            "BIGRAM SCORE",
+            "STOPWORD",
+            "STOPWORD SCORE"
+        ))
+        for index in range(10):
+            unigram_current = self._get(self.result["unigram top 10"], index)
+            bigram_current = self._get(self.result["bigram top 10"], index)
+            stopword_current = self._get(self.result["stopword top 10"], index)
+
+            print("%-5i%-20s%-20f%-20s%-20f%-20s%-20f" % (
+                index + 1,
+                unigram_current.word,
+                unigram_current.score,
+                bigram_current.word,
+                bigram_current.score,
+                stopword_current.word,
+                stopword_current.score
+            ))

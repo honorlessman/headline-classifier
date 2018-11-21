@@ -16,9 +16,10 @@ EXPERIMENTAL_FILTERING = False
 TF_IDF = False
 UNIGRAM_TOKEN_CLEAR = True
 
+LIST_TOP_10 = True
+
 
 if __name__ == "__main__":
-    # TODO: either deal with tf-idf or finish the top scoring
     # parse data from file
     real_data = Data(fpath=REAL_TRAIN_DATA_PATH, line_prepend=LINE_PREPEND, line_append=LINE_APPEND)
     fake_data = Data(fpath=FAKE_TRAIN_DATA_PATH, line_prepend=LINE_PREPEND, line_append=LINE_APPEND)
@@ -59,6 +60,14 @@ if __name__ == "__main__":
     # analyze the training data (check top 10s)
     real_data.analysis(fake_data, ENGLISH_STOP_WORDS)
     fake_data.analysis(real_data, ENGLISH_STOP_WORDS)
+
+    # list the top10 words
+    if LIST_TOP_10:
+        print("\nTHE WORDS INDICATING THE HEADLINE IS FAKE")
+        fake_data.pprint()
+        print("\nTHE WORDS INDICATING THE HEADLINE IS REAL")
+        real_data.pprint()
+        print("")
 
     # get results
     print("Unigram accuracy: {:.2f}%".format(model.accuracy_score))

@@ -97,7 +97,7 @@ class Data:
 
     def pprint(self):
         """ pretty print for the results """
-        
+
         print("%-5s%-20s%-20s%-20s%-20s%-20s%-20s" % (
             "#",
             "UNIGRAM WORD",
